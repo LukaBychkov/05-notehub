@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebouncedCallback } from "use-debounce";
-import { fetchNotes, deleteNote } from "../../services/noteService";
+import { fetchNotes } from "../../services/noteService";
 
 import NoteList from "../NoteList/NoteList";
 import Pagination from "../Pagination/Pagination";
@@ -18,12 +18,9 @@ export default function App() {
   const [searchInputValue, setSearchInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const queryClient = useQueryClient();
-
-  // Задержка на поиске 300мс
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearchQuery(value);
-    setPage(1); // Сбрасываем при поиске на 1 страничку
+    setPage(1);
   }, 300);
 
   const handleSearchChange = (value: string) => {
@@ -31,23 +28,11 @@ export default function App() {
     debouncedSearch(value);
   };
 
-  // Тут запрашивание заметок
   const { data, isLoading, isError } = useQuery({
     queryKey: ["notes", page, searchQuery],
     queryFn: () => fetchNotes(page, searchQuery),
+    placeholderData: keepPreviousData,
   });
-
-  // Удаляем заметку
-  const deleteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
 
   return (
     <div className={css.app}>
@@ -70,9 +55,7 @@ export default function App() {
       {isLoading && <p>Loading notes...</p>}
       {isError && <p>Something went wrong!</p>}
 
-      {data?.notes && data.notes.length > 0 && (
-        <NoteList notes={data.notes} onDelete={handleDelete} />
-      )}
+      {data?.notes && data.notes.length > 0 && <NoteList notes={data.notes} />}
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>

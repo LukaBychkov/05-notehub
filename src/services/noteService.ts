@@ -24,16 +24,18 @@ export const fetchNotes = async (
   search = "",
   perPage = 10,
 ): Promise<FetchNotesResponse> => {
-  const res = await Api.get("/notes", { params: { page, search, perPage } });
+  const res = await Api.get<FetchNotesResponse>("/notes", {
+    params: { page, search, perPage },
+  });
   return res.data;
 };
 
-export const createNote = async (newNote: CreateNoteParams) => {
+export const createNote = async (newNote: CreateNoteParams): Promise<Note> => {
   const res = await Api.post<Note>("/notes", newNote);
   return res.data;
 };
 
-export const deleteNote = async (id: string) => {
-  const res = await Api.delete(`/notes/${id}`);
+export const deleteNote = async (id: string): Promise<Note> => {
+  const res = await Api.delete<Note>(`/notes/${id}`);
   return res.data;
 };
